@@ -24,80 +24,95 @@ GLFWwindow* glfw_window;
 } // namespace
 
 int main() {
-	int status = EXIT_SUCCESS;
+	try {	
+		int status = EXIT_SUCCESS;
 
-	if (!glfwInit()) {
-		std::cerr << "Failed to initialize GLFW\n";
-		return EXIT_FAILURE;
-	}
-
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-	glfw_window = glfwCreateWindow(default_window_width, default_window_height,
-	                               default_window_title, nullptr, nullptr);
-	if (glfw_window == nullptr) {
-		status = EXIT_FAILURE;
-		goto err_null_window;
-	}
-
-	glfwSetFramebufferSizeCallback(glfw_window, [](GLFWwindow*, int width, int height){
-		if (width == 0 || height == 0) {
-			return;
+		if (!glfwInit()) {
+			std::cerr << "Failed to initialize GLFW\n";
+			return EXIT_FAILURE;
 		}
 
-		graphics::internal::resize(width, height);
-	});
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-	if (ImGui::CreateContext() == nullptr) {
-		std::cerr << "Failed to create ImGUI context\n";
-		status = EXIT_FAILURE;
-		goto err_imgui_init;
-	}
+		glfw_window = glfwCreateWindow(default_window_width, default_window_height,
+									default_window_title, nullptr, nullptr);
+		if (glfw_window == nullptr) {
+			status = EXIT_FAILURE;
+			goto err_null_window;
+		}
 
-	if (!ImGui_ImplGlfw_InitForVulkan(glfw_window, true)) {
-		std::cerr << "Failed to initialize ImGUI GLFW backend for Vulkan renderer\n";
-		status = EXIT_FAILURE;
-		goto err_imgui_glfw_init;
-	}
+		glfwSetFramebufferSizeCallback(glfw_window, [](GLFWwindow*, int width, int height){
+			if (width == 0 || height == 0) {
+				return;
+			}
 
-	if (!graphics::internal::initialize(glfw_window)) {
-		std::cerr << "Failed to initialize graphics\n";
-		status = EXIT_FAILURE;
-		goto err_graphics_init;
-	}
+			graphics::internal::resize(width, height);
+		});
 
-	if (!application::initialize()) {
-		std::cerr << "Failed to initialize application\n";
-		status = EXIT_FAILURE;
-		goto err_application_init;
-	}
+		if (ImGui::CreateContext() == nullptr) {
+			std::cerr << "Failed to create ImGUI context\n";
+			status = EXIT_FAILURE;
+			goto err_imgui_init;
+		}
 
-	while (!glfwWindowShouldClose(glfw_window)) {
-		const double time = glfwGetTime();
+		if (!ImGui_ImplGlfw_InitForVulkan(glfw_window, true)) {
+			std::cerr << "Failed to initialize ImGUI GLFW backend for Vulkan renderer\n";
+			status = EXIT_FAILURE;
+			goto err_imgui_glfw_init;
+		}
 
-		glfwPollEvents();
-		ImGui_ImplGlfw_NewFrame();
+		if (!graphics::internal::initialize(glfw_window)) {
+			std::cerr << "Failed to initialize graphics\n";
+			status = EXIT_FAILURE;
+			goto err_graphics_init;
+		}
 
-		ImGui::NewFrame();
-		application::update(time);
-		ImGui::Render();
+		if (!application::initialize()) {
+			std::cerr << "Failed to initialize application\n";
+			status = EXIT_FAILURE;
+			goto err_application_init;
+		}
 
-		graphics::internal::FrameData fd = graphics::internal::prepare();
-		application::render(fd);
-		graphics::internal::submitAndPresent();
-	}
+		while (!glfwWindowShouldClose(glfw_window)) {
+			const double time = glfwGetTime();
 
-	application::shutdown();
-err_application_init:
-	graphics::internal::shutdown();
-err_graphics_init:
-	ImGui_ImplGlfw_Shutdown();
-err_imgui_glfw_init:
-	ImGui::DestroyContext();
-err_imgui_init:
-	glfwDestroyWindow(glfw_window);
-err_null_window:
-	glfwTerminate();
+			glfwPollEvents();
+			ImGui_ImplGlfw_NewFrame();
 
-	return 0;
+			ImGui::NewFrame();
+			application::update(time);
+			ImGui::Render();
+
+			graphics::internal::FrameData fd = graphics::internal::prepare();
+			application::render(fd);
+			graphics::internal::submitAndPresent();
+		}
+
+		application::shutdown();
+	err_application_init:
+		graphics::internal::shutdown();
+	err_graphics_init:
+		ImGui_ImplGlfw_Shutdown();
+	err_imgui_glfw_init:
+		ImGui::DestroyContext();
+	err_imgui_init:
+		glfwDestroyWindow(glfw_window);
+	err_null_window:
+		glfwTerminate();
+
+		return EXIT_SUCCESS;
+    } 
+    catch (const std::exception& e) {
+        std::cerr << "[CRITICAL ERROR] " << e.what() << std::endl;
+        
+        // Пауза, чтобы консоль не закрылась мгновенно, если вы запускаете через двойной клик
+        std::cout << "Press Enter to exit..." << std::endl;
+        std::cin.get();
+        
+        return EXIT_FAILURE;
+    } 
+    catch (...) {
+        std::cerr << "[CRITICAL ERROR] Unknown exception occurred!" << std::endl;
+        return EXIT_FAILURE;
+    }
 }

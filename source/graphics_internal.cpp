@@ -61,7 +61,7 @@ VkCommandBuffer vk_imgui_command_buffer;
 VkFormat selectDepthFormat(VkPhysicalDevice physical_device) {
 	// Prefer the original format and preserve stencil support in the fallback.
 	const VkFormat candidates[] = {
-		VK_FORMAT_D24_UNORM_S8_UINT,
+		VK_FORMAT_D16_UNORM,
 		VK_FORMAT_D32_SFLOAT_S8_UINT,
 	};
 
@@ -390,7 +390,7 @@ bool initialize(GLFWwindow* const window) {
 	vkb::InstanceBuilder ib;
 
 	auto ibr = ib.require_api_version(VK_MAKE_VERSION(1, 1, 0))
-				 .request_validation_layers()
+				 .request_validation_layers(false)					// false added
 				 .build();
 
 	auto vkb_instance = ibr.value();
@@ -786,7 +786,7 @@ void submitAndPresent() {
 	    result == VK_SUBOPTIMAL_KHR ||
 	    vk_swapchain_resize_require) {
 		rebuildSwapchain(vk_swapchain_resize_width, vk_swapchain_resize_height);
-	} else {
+	} else if (result != VK_SUCCESS) {
 		std::cerr << "Failed to present Vulkan swapchain image\n";
 	}
 }
