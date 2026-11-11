@@ -6,8 +6,9 @@
 // Структура вершины, совпадающая с layout в вершинном шейдере
 struct Vertex {
     glm::vec3 position;
-    glm::vec3 normal;  // Добавлено
+    glm::vec3 normal;
     glm::vec3 color;
+    glm::vec2 uv;
 
     static std::vector<VkVertexInputBindingDescription> getBindingDescription() {
         std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
@@ -18,8 +19,7 @@ struct Vertex {
     }
 
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions() {
-        // ВАЖНО: Теперь атрибутов 3, а не 2!
-        std::vector<VkVertexInputAttributeDescription> attributeDescriptions(3);
+        std::vector<VkVertexInputAttributeDescription> attributeDescriptions(4);
         
         // позиция location = 0
         attributeDescriptions[0].binding = 0;
@@ -38,6 +38,11 @@ struct Vertex {
         attributeDescriptions[2].location = 2;
         attributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
         attributeDescriptions[2].offset = offsetof(Vertex, color);
+
+        attributeDescriptions[3].binding = 0; 
+        attributeDescriptions[3].location = 3;
+        attributeDescriptions[3].format  = VK_FORMAT_R32G32_SFLOAT;
+        attributeDescriptions[3].offset  = offsetof(Vertex, uv);
 
         return attributeDescriptions;
     }

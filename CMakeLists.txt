@@ -3,7 +3,8 @@ include(FetchContent)
 
 project(vulkan-starter-app LANGUAGES C CXX)
 
-add_executable(${PROJECT_NAME} source/main.cpp source/graphics_internal.cpp source/application.cpp source/vk_buffer.cpp source/geometry.hpp)
+add_executable(${PROJECT_NAME} source/main.cpp source/graphics_internal.cpp source/application.cpp source/vk_buffer.cpp source/vk_texture.cpp)
+target_include_directories(vulkan-starter-app PRIVATE external/stb)
 
 if(LINUX)
 	target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wno-missing-field-initializers)
@@ -24,7 +25,7 @@ endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD_REQUIRED TRUE CXX_STANDARD 20)
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE -DSHADER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/shaders/")
+target_compile_definitions(${PROJECT_NAME} PRIVATE -DSHADER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/shaders/" TEXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets/textures/")
 
 FetchContent_Declare(
 	glfw
@@ -90,6 +91,10 @@ target_sources(${PROJECT_NAME} PRIVATE
 	${imgui_SOURCE_DIR}/imgui_demo.cpp
 )
 
+add_custom_command(TARGET vulkan-starter-app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/assets $<TARGET_FILE_DIR:vulkan-starter-app>/assets)
+		
 # Compile shaders
 find_program(GLSLC_FOUND glslc)
 if(GLSLC_FOUND)
